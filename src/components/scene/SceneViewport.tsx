@@ -45,24 +45,24 @@ const CAMERA_PRESETS: Record<
   { pos: [number, number, number]; target: [number, number, number] }
 > = {
   iso: {
-    pos: [19.5, 16.5, 25.5],
-    target: [0, 9.6, 0.3],
+    pos: [30.5, 24.5, 43.5],
+    target: [0, 10.8, 0.3],
   },
   front: {
-    pos: [0, 10.6, 33.5],
-    target: [0, 9.8, 0],
+    pos: [0, 11.4, 54.0],
+    target: [0, 10.8, 0],
   },
   side: {
-    pos: [33.5, 10.6, 0.5],
-    target: [0, 9.8, 0.2],
+    pos: [54.0, 11.4, 0.4],
+    target: [0, 10.8, 0.2],
   },
   top: {
-    pos: [0, 38.5, 5.2],
-    target: [0, 9.2, 0.4],
+    pos: [0, 56.0, 7.5],
+    target: [0, 10.0, 0.4],
   },
 };
 
-const DEFAULT_TARGET = new THREE.Vector3(0, 9.6, 0.3);
+const DEFAULT_TARGET = new THREE.Vector3(0, 10.8, 0.3);
 
 interface CameraRigProps {
   cameraPreset: SceneViewportProps['cameraPreset'];
@@ -174,11 +174,11 @@ function StudioCameraRig({
     <OrbitControls
       ref={controlsRef}
       makeDefault
-      target={[0, 9.6, 0.3]}
+      target={[0, 10.8, 0.3]}
       enableDamping
       dampingFactor={0.075}
-      minDistance={9}
-      maxDistance={65}
+      minDistance={12}
+      maxDistance={95}
       maxPolarAngle={Math.PI * 0.495}
       onStart={() => {
         // Immediately yield control to user drag/zoom
@@ -200,11 +200,11 @@ export function SceneViewport(props: SceneViewportProps): JSX.Element {
   } = props;
 
   return (
-    <div className="relative h-full w-full select-none overflow-hidden bg-[#EEF1F5]">
+    <div className="relative isolate h-full w-full select-none overflow-hidden bg-[#EEF1F5]">
       <Canvas
         shadows
         dpr={[1, 2]}
-        camera={{ position: CAMERA_PRESETS.iso.pos, fov: 34, near: 0.2, far: 180 }}
+        camera={{ position: CAMERA_PRESETS.iso.pos, fov: 38, near: 0.2, far: 240 }}
         gl={{
           antialias: true,
           toneMapping: THREE.ACESFilmicToneMapping,
@@ -217,7 +217,7 @@ export function SceneViewport(props: SceneViewportProps): JSX.Element {
       >
         {/* Warm Swiss-CAD Porcelain Drafting Studio Atmosphere */}
         <color attach="background" args={['#EEF1F5']} />
-        <fog attach="fog" args={['#EEF1F5', 56, 125]} />
+        <fog attach="fog" args={['#EEF1F5', 78, 175]} />
 
         {/* Procedural Studio Softbox IBL (100% offline, zero external HDR fetch) */}
         <Environment resolution={256} frames={1}>
@@ -286,15 +286,15 @@ export function SceneViewport(props: SceneViewportProps): JSX.Element {
         {/* Engineering Floor Grid (1 minor cell = 10mm, 1 major section = 50mm) */}
         <Grid
           position={[0, 0.002, 0]}
-          args={[64, 64]}
+          args={[80, 80]}
           cellSize={1}
           cellThickness={0.55}
           cellColor="#CBD5E1"
           sectionSize={5}
           sectionThickness={1.05}
           sectionColor="#94A3B8"
-          fadeDistance={52}
-          fadeStrength={1.6}
+          fadeDistance={88}
+          fadeStrength={1.5}
           infiniteGrid
         />
 
@@ -304,7 +304,7 @@ export function SceneViewport(props: SceneViewportProps): JSX.Element {
           position={[0, -0.004, 0]}
           receiveShadow
         >
-          <planeGeometry args={[90, 90]} />
+          <planeGeometry args={[120, 120]} />
           <shadowMaterial transparent opacity={0.12} color="#1E293B" />
         </mesh>
 
@@ -312,9 +312,9 @@ export function SceneViewport(props: SceneViewportProps): JSX.Element {
         <ContactShadows
           position={[0, 0.006, 0]}
           opacity={0.32}
-          scale={32}
+          scale={42}
           blur={2.15}
-          far={18}
+          far={20}
           resolution={512}
           color="#1E293B"
         />
@@ -349,7 +349,7 @@ export function SceneViewport(props: SceneViewportProps): JSX.Element {
       </Canvas>
 
       {/* Subtle Swiss-CAD Viewport Scale Corner Legend */}
-      <div className="pointer-events-none absolute bottom-3 left-3 flex items-center gap-2 rounded-lg border border-slate-300/75 bg-white/80 px-2.5 py-1 font-mono text-[10px] text-slate-600 shadow-sm backdrop-blur-sm">
+      <div className="pointer-events-none absolute bottom-3 left-3 z-20 flex items-center gap-2 rounded-lg border border-slate-300/75 bg-white/85 px-2.5 py-1 font-mono text-[10px] text-slate-600 shadow-sm backdrop-blur-sm">
         <span className="inline-block h-2 w-2 rounded-full bg-orange-500" />
         <span>SCALE 1:1 · GRID 10 mm</span>
         <span className="text-slate-300">|</span>

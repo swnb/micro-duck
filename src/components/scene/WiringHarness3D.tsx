@@ -140,6 +140,13 @@ function SingleWireTube({
   };
 
   const opacity = isHighlighted || hovered ? 0.98 : isDimmed ? 0.28 : 0.88;
+  const isTransparent = opacity < 0.96;
+
+  useEffect(() => {
+    if (materialRef.current) {
+      materialRef.current.needsUpdate = true;
+    }
+  }, [isTransparent, opacity]);
 
   return (
     <group>
@@ -152,12 +159,13 @@ function SingleWireTube({
       >
         <meshStandardMaterial
           ref={materialRef}
+          key={isTransparent ? 'wire-trans' : 'wire-opaque'}
           color={wire.color}
           emissive={wire.color}
           emissiveIntensity={isHighlighted ? 0.6 : 0.08}
           roughness={0.42}
           metalness={0.08}
-          transparent={opacity < 0.96}
+          transparent={isTransparent}
           opacity={opacity}
           depthWrite={opacity >= 0.8}
         />

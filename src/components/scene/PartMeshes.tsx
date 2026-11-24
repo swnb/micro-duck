@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { StepVisualState } from './CustomCadMesh';
 
@@ -90,6 +90,30 @@ function resolveMatProps(visual: PartVisualState, cfg: MatConfig) {
     emissive,
     emissiveIntensity,
   };
+}
+
+type ResolvedMatProps = ReturnType<typeof resolveMatProps>;
+
+/**
+ * Wraps meshStandardMaterial so live transparent/depthWrite toggles (X-Ray &
+ * activeStep ghosting) always recompile shaders and re-sort Three.js render lists.
+ */
+function CadMaterial({ mat }: { mat: ResolvedMatProps }): JSX.Element {
+  const matRef = useRef<THREE.MeshStandardMaterial>(null);
+
+  useEffect(() => {
+    if (matRef.current) {
+      matRef.current.needsUpdate = true;
+    }
+  }, [mat.transparent, mat.depthWrite, mat.opacity]);
+
+  return (
+    <meshStandardMaterial
+      ref={matRef}
+      key={mat.transparent ? 'cad-trans' : 'cad-opaque'}
+      {...mat}
+    />
+  );
 }
 
 // ============================================================================
@@ -388,7 +412,7 @@ function MG90SServoMesh({ visual, hornAngleZ = 0 }: MG90SServoProps): JSX.Elemen
       {/* Translucent cobalt blue lower body */}
       <mesh position={[0.58, -1.25, 0]} castShadow receiveShadow>
         <boxGeometry args={[2.28, 2.02, 1.22]} />
-        <meshStandardMaterial {...bodyMat} />
+        <CadMaterial mat={bodyMat} />
       </mesh>
 
       {/* Internal subtle gear silhouette visible through translucent cobalt case */}
@@ -402,60 +426,60 @@ function MG90SServoMesh({ visual, hornAngleZ = 0 }: MG90SServoProps): JSX.Elemen
       {/* Side mounting ears (flanges, total span 3.22 = 32.2mm) */}
       <mesh position={[0.58, -0.58, 0]} castShadow receiveShadow>
         <boxGeometry args={[3.22, 0.22, 1.22]} />
-        <meshStandardMaterial {...bodyMat} />
+        <CadMaterial mat={bodyMat} />
       </mesh>
 
       {/* M2 mounting screws on both ears */}
       <mesh position={[-0.82, -0.45, 0]}>
         <cylinderGeometry args={[0.12, 0.12, 0.28, 12]} />
-        <meshStandardMaterial {...screwMat} />
+        <CadMaterial mat={screwMat} />
       </mesh>
       <mesh position={[1.98, -0.45, 0]}>
         <cylinderGeometry args={[0.12, 0.12, 0.28, 12]} />
-        <meshStandardMaterial {...screwMat} />
+        <CadMaterial mat={screwMat} />
       </mesh>
 
       {/* Brushed aluminum metal gear cap */}
       <mesh position={[0.58, -0.14, 0]} castShadow receiveShadow>
         <boxGeometry args={[2.24, 0.34, 1.18]} />
-        <meshStandardMaterial {...capMat} />
+        <CadMaterial mat={capMat} />
       </mesh>
 
       {/* Stepped main gear turret around spline at X=0 */}
       <mesh position={[0, 0.08, 0]} castShadow>
         <cylinderGeometry args={[0.58, 0.6, 0.28, 20]} />
-        <meshStandardMaterial {...capMat} />
+        <CadMaterial mat={capMat} />
       </mesh>
       {/* Secondary idler gear boss */}
       <mesh position={[0.68, 0.04, 0]}>
         <cylinderGeometry args={[0.28, 0.3, 0.2, 16]} />
-        <meshStandardMaterial {...capMat} />
+        <CadMaterial mat={capMat} />
       </mesh>
 
       {/* Brass output spline shaft */}
       <mesh position={[0, 0.26, 0]}>
         <cylinderGeometry args={[0.21, 0.21, 0.32, 16]} />
-        <meshStandardMaterial {...brassMat} />
+        <CadMaterial mat={brassMat} />
       </mesh>
 
       {/* White nylon single-arm servo horn */}
       <group position={[0, 0.34, 0]} rotation={[0, hornAngleZ, 0]}>
         <mesh castShadow>
           <cylinderGeometry args={[0.32, 0.32, 0.16, 16]} />
-          <meshStandardMaterial {...hornMat} />
+          <CadMaterial mat={hornMat} />
         </mesh>
         <mesh position={[0.58, 0, 0]} castShadow>
           <boxGeometry args={[1.18, 0.14, 0.38]} />
-          <meshStandardMaterial {...hornMat} />
+          <CadMaterial mat={hornMat} />
         </mesh>
         <mesh position={[1.12, 0, 0]}>
           <cylinderGeometry args={[0.19, 0.19, 0.14, 14]} />
-          <meshStandardMaterial {...hornMat} />
+          <CadMaterial mat={hornMat} />
         </mesh>
         {/* Center horn screw */}
         <mesh position={[0, 0.1, 0]}>
           <cylinderGeometry args={[0.11, 0.11, 0.08, 12]} />
-          <meshStandardMaterial {...screwMat} />
+          <CadMaterial mat={screwMat} />
         </mesh>
       </group>
 
@@ -506,34 +530,34 @@ function ChassisPelvisMesh({ visual }: { visual: PartVisualState }) {
       {/* Main structural base deck */}
       <mesh position={[0, -0.12, 0]} castShadow receiveShadow>
         <boxGeometry args={[7.4, 0.48, 5.6]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
       {/* Front & rear structural stiffening rails */}
       <mesh position={[0, 0.26, 2.45]} castShadow receiveShadow>
         <boxGeometry args={[7.4, 0.52, 0.65]} />
-        <meshStandardMaterial {...ivoryMat} />
+        <CadMaterial mat={ivoryMat} />
       </mesh>
       <mesh position={[0, 0.26, -2.45]} castShadow receiveShadow>
         <boxGeometry args={[7.4, 0.52, 0.65]} />
-        <meshStandardMaterial {...ivoryMat} />
+        <CadMaterial mat={ivoryMat} />
       </mesh>
       {/* Left & right hip-roll servo bay saddle pockets */}
       <mesh position={[-2.1, -0.32, 0]} castShadow receiveShadow>
         <boxGeometry args={[2.45, 0.85, 2.3]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
       <mesh position={[2.1, -0.32, 0]} castShadow receiveShadow>
         <boxGeometry args={[2.45, 0.85, 2.3]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
       {/* Central battery retention side walls */}
       <mesh position={[-1.95, 0.38, -0.7]} castShadow>
         <boxGeometry args={[0.26, 0.72, 3.6]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
       <mesh position={[1.95, 0.38, -0.7]} castShadow>
         <boxGeometry args={[0.26, 0.72, 3.6]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
       {/* 4 corner M3 brass threaded insert bosses */}
       {(
@@ -546,7 +570,7 @@ function ChassisPelvisMesh({ visual }: { visual: PartVisualState }) {
       ).map(([x, y, z], idx) => (
         <mesh key={idx} position={[x, y, z]}>
           <cylinderGeometry args={[0.26, 0.26, 0.24, 12]} />
-          <meshStandardMaterial {...brassMat} />
+          <CadMaterial mat={brassMat} />
         </mesh>
       ))}
     </group>
@@ -570,30 +594,30 @@ function ElectronicsDeckMesh({ visual }: { visual: PartVisualState }) {
       {/* Main electronics intermediate deck */}
       <mesh position={[0, 0, -0.1]} castShadow receiveShadow>
         <boxGeometry args={[7.0, 0.34, 5.2]} />
-        <meshStandardMaterial {...plateMat} />
+        <CadMaterial mat={plateMat} />
       </mesh>
       {/* Side cable routing guard lips */}
       <mesh position={[-3.38, 0.25, -0.1]} castShadow>
         <boxGeometry args={[0.24, 0.3, 4.4]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
       <mesh position={[3.38, 0.25, -0.1]} castShadow>
         <boxGeometry args={[0.24, 0.3, 4.4]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
       {/* Twin internal spine struts supporting the top neck pitch servo cradle */}
       <mesh position={[-1.95, 1.58, 0.1]} castShadow>
         <boxGeometry args={[0.3, 3.05, 0.65]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
       <mesh position={[1.95, 1.58, 0.1]} castShadow>
         <boxGeometry args={[0.3, 3.05, 0.65]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
       {/* Upper neck bridge deck at local y=+3.05 (world y=13.15) */}
       <mesh position={[0, 3.08, 0.1]} castShadow receiveShadow>
         <boxGeometry args={[4.25, 0.32, 1.55]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
     </group>
   );
@@ -624,25 +648,25 @@ function TorsoFrontShellMesh({ visual }: { visual: PartVisualState }) {
     <group>
       {/* Rounded BDX chest shell */}
       <mesh geometry={geom} position={[0, 0, -0.18]} castShadow receiveShadow>
-        <meshStandardMaterial {...shellMat} />
+        <CadMaterial mat={shellMat} />
       </mesh>
 
       {/* Recessed chest panel bezel */}
       <mesh position={[0, 0.65, 0.78]} castShadow>
         <boxGeometry args={[3.9, 1.45, 0.18]} />
-        <meshStandardMaterial {...accentMat} />
+        <CadMaterial mat={accentMat} />
       </mesh>
       {/* Crisp ivory center inset nameplate on orange badge */}
       <mesh position={[0, 0.65, 0.89]}>
         <boxGeometry args={[1.45, 0.45, 0.08]} />
-        <meshStandardMaterial {...shellMat} />
+        <CadMaterial mat={shellMat} />
       </mesh>
 
       {/* 3 horizontal precision ventilation louvers */}
       {[-0.65, -1.12, -1.59].map((yPos, i) => (
         <mesh key={i} position={[0, yPos, 0.76]}>
           <boxGeometry args={[3.4 - i * 0.35, 0.18, 0.16]} />
-          <meshStandardMaterial {...ventMat} />
+          <CadMaterial mat={ventMat} />
         </mesh>
       ))}
     </group>
@@ -674,30 +698,30 @@ function TorsoBackShellMesh({ visual }: { visual: PartVisualState }) {
     <group>
       {/* Rounded BDX backpack shell */}
       <mesh geometry={geom} position={[0, 0, 0.18]} castShadow receiveShadow>
-        <meshStandardMaterial {...shellMat} />
+        <CadMaterial mat={shellMat} />
       </mesh>
 
       {/* USB-C access window bezel around world y=11.9 (local y=+1.4) */}
       <mesh position={[0, 1.38, -0.82]}>
         <boxGeometry args={[1.4, 0.72, 0.18]} />
-        <meshStandardMaterial {...darkMat} />
+        <CadMaterial mat={darkMat} />
       </mesh>
 
       {/* Power rocker switch access slot */}
       <mesh position={[-2.0, -0.95, -0.78]}>
         <boxGeometry args={[0.92, 1.15, 0.2]} />
-        <meshStandardMaterial {...darkMat} />
+        <CadMaterial mat={darkMat} />
       </mesh>
       <mesh position={[-2.0, -0.95, -0.86]}>
         <boxGeometry args={[0.48, 0.72, 0.14]} />
-        <meshStandardMaterial {...accentMat} />
+        <CadMaterial mat={accentMat} />
       </mesh>
 
       {/* Rear cooling ribs */}
       {[0.25, -0.22, -0.69].map((yPos, i) => (
         <mesh key={i} position={[0.85, yPos, -0.8]}>
           <boxGeometry args={[2.5, 0.16, 0.16]} />
-          <meshStandardMaterial {...darkMat} />
+          <CadMaterial mat={darkMat} />
         </mesh>
       ))}
     </group>
@@ -729,12 +753,12 @@ function SideWingMesh({
   return (
     <group rotation={[0, 0, -sign * 0.14]}>
       <mesh geometry={geom} castShadow receiveShadow>
-        <meshStandardMaterial {...shellMat} />
+        <CadMaterial mat={shellMat} />
       </mesh>
       {/* Sleek orange stripe along lower wing edge */}
       <mesh position={[sign * 0.42, -0.75, 0.15]} rotation={[0.25, 0, 0]}>
         <boxGeometry args={[0.14, 0.34, 2.4]} />
-        <meshStandardMaterial {...accentMat} />
+        <CadMaterial mat={accentMat} />
       </mesh>
     </group>
   );
@@ -774,37 +798,37 @@ function Battery2SMesh({ visual }: { visual: PartVisualState }) {
         <group key={idx} position={[0, 0, zOff]} rotation={[0, 0, Math.PI / 2]}>
           <mesh castShadow receiveShadow>
             <cylinderGeometry args={[0.82, 0.82, 3.55, 22]} />
-            <meshStandardMaterial {...cellMat} />
+            <CadMaterial mat={cellMat} />
           </mesh>
           {/* End cap amber Kapton bands */}
           <mesh position={[0, 1.62, 0]}>
             <cylinderGeometry args={[0.835, 0.835, 0.28, 22]} />
-            <meshStandardMaterial {...kaptonMat} />
+            <CadMaterial mat={kaptonMat} />
           </mesh>
           <mesh position={[0, -1.62, 0]}>
             <cylinderGeometry args={[0.835, 0.835, 0.28, 22]} />
-            <meshStandardMaterial {...kaptonMat} />
+            <CadMaterial mat={kaptonMat} />
           </mesh>
           {/* Metallic end terminals */}
           <mesh position={[0, 1.8, 0]}>
             <cylinderGeometry args={[0.42, 0.42, 0.08, 16]} />
-            <meshStandardMaterial {...metalMat} />
+            <CadMaterial mat={metalMat} />
           </mesh>
           <mesh position={[0, -1.8, 0]}>
             <cylinderGeometry args={[0.42, 0.42, 0.08, 16]} />
-            <meshStandardMaterial {...metalMat} />
+            <CadMaterial mat={metalMat} />
           </mesh>
         </group>
       ))}
       {/* Black Velcro battery retention strap */}
       <mesh position={[0, 0.02, 0]}>
         <boxGeometry args={[0.78, 1.72, 3.44]} />
-        <meshStandardMaterial {...strapMat} />
+        <CadMaterial mat={strapMat} />
       </mesh>
       {/* Yellow XT30 anti-reverse plug */}
       <mesh position={[-1.92, 0.15, 0.55]} castShadow>
         <boxGeometry args={[0.65, 0.44, 0.78]} />
-        <meshStandardMaterial {...xt30Mat} />
+        <CadMaterial mat={xt30Mat} />
       </mesh>
     </group>
   );
@@ -837,35 +861,35 @@ function Ubec5VMesh({ visual }: { visual: PartVisualState }) {
       {/* Main 5V/5A UBEC shielded converter housing */}
       <mesh castShadow receiveShadow>
         <boxGeometry args={[1.15, 0.95, 2.95]} />
-        <meshStandardMaterial {...bodyMat} />
+        <CadMaterial mat={bodyMat} />
       </mesh>
       {/* Aluminum cooling heatsink ribs on top */}
       {[-0.85, -0.42, 0, 0.42, 0.85].map((zOff, i) => (
         <mesh key={i} position={[0, 0.54, zOff]}>
           <boxGeometry args={[0.98, 0.16, 0.16]} />
-          <meshStandardMaterial {...heatsinkMat} />
+          <CadMaterial mat={heatsinkMat} />
         </mesh>
       ))}
       {/* Prominent 1000µF radial bulk electrolytic capacitor */}
       <group position={[0.25, 0.15, 1.78]}>
         <mesh castShadow>
           <cylinderGeometry args={[0.42, 0.42, 1.05, 18]} />
-          <meshStandardMaterial {...capBodyMat} />
+          <CadMaterial mat={capBodyMat} />
         </mesh>
         {/* Silver polarity stripe + aluminum top vent */}
         <mesh position={[0, 0.535, 0]}>
           <cylinderGeometry args={[0.38, 0.38, 0.04, 18]} />
-          <meshStandardMaterial {...heatsinkMat} />
+          <CadMaterial mat={heatsinkMat} />
         </mesh>
         <mesh position={[-0.39, 0, 0]}>
           <boxGeometry args={[0.08, 0.96, 0.18]} />
-          <meshStandardMaterial {...heatsinkMat} />
+          <CadMaterial mat={heatsinkMat} />
         </mesh>
       </group>
       {/* Red master power rocker switch */}
       <mesh position={[-0.1, -0.05, -1.78]} rotation={[0.2, 0, 0]} castShadow>
         <boxGeometry args={[0.72, 0.78, 0.55]} />
-        <meshStandardMaterial {...switchRedMat} />
+        <CadMaterial mat={switchRedMat} />
       </mesh>
     </group>
   );
@@ -901,22 +925,22 @@ function PcbPca9685Mesh({ visual }: { visual: PartVisualState }) {
       {/* Emerald PCB substrate (62 × 25 mm) */}
       <mesh castShadow receiveShadow>
         <boxGeometry args={[6.1, 0.18, 2.45]} />
-        <meshStandardMaterial {...pcbMat} />
+        <CadMaterial mat={pcbMat} />
       </mesh>
 
       {/* Iconic green V+ / GND 2-pin screw terminal block on -X side */}
       <group position={[-2.35, 0.46, 0.25]}>
         <mesh castShadow>
           <boxGeometry args={[0.92, 0.78, 1.05]} />
-          <meshStandardMaterial {...termMat} />
+          <CadMaterial mat={termMat} />
         </mesh>
         <mesh position={[0, 0.41, -0.25]}>
           <cylinderGeometry args={[0.16, 0.16, 0.06, 12]} />
-          <meshStandardMaterial {...metalMat} />
+          <CadMaterial mat={metalMat} />
         </mesh>
         <mesh position={[0, 0.41, 0.25]}>
           <cylinderGeometry args={[0.16, 0.16, 0.06, 12]} />
-          <meshStandardMaterial {...metalMat} />
+          <CadMaterial mat={metalMat} />
         </mesh>
       </group>
 
@@ -924,18 +948,18 @@ function PcbPca9685Mesh({ visual }: { visual: PartVisualState }) {
       <group position={[-1.25, 0.54, -0.58]}>
         <mesh castShadow>
           <cylinderGeometry args={[0.36, 0.36, 0.9, 16]} />
-          <meshStandardMaterial {...icMat} />
+          <CadMaterial mat={icMat} />
         </mesh>
         <mesh position={[0, 0.46, 0]}>
           <cylinderGeometry args={[0.32, 0.32, 0.04, 16]} />
-          <meshStandardMaterial {...metalMat} />
+          <CadMaterial mat={metalMat} />
         </mesh>
       </group>
 
       {/* Central PCA9685 TSSOP-28 IC */}
       <mesh position={[0.15, 0.16, -0.55]}>
         <boxGeometry args={[0.92, 0.16, 0.52]} />
-        <meshStandardMaterial {...icMat} />
+        <CadMaterial mat={icMat} />
       </mesh>
 
       {/* 16 colored 3-pin servo headers arranged in 4 neat groups of 4 channels */}
@@ -944,17 +968,17 @@ function PcbPca9685Mesh({ visual }: { visual: PartVisualState }) {
           {/* Yellow PWM signal row */}
           <mesh position={[0, 0, -0.28]}>
             <boxGeometry args={[0.88, 0.46, 0.22]} />
-            <meshStandardMaterial {...pwmYellow} />
+            <CadMaterial mat={pwmYellow} />
           </mesh>
           {/* Red 5V V+ row */}
           <mesh position={[0, 0, 0]}>
             <boxGeometry args={[0.88, 0.46, 0.22]} />
-            <meshStandardMaterial {...vccRed} />
+            <CadMaterial mat={vccRed} />
           </mesh>
           {/* Black GND row */}
           <mesh position={[0, 0, 0.28]}>
             <boxGeometry args={[0.88, 0.46, 0.22]} />
-            <meshStandardMaterial {...gndBlack} />
+            <CadMaterial mat={gndBlack} />
           </mesh>
         </group>
       ))}
@@ -962,7 +986,7 @@ function PcbPca9685Mesh({ visual }: { visual: PartVisualState }) {
       {/* 6-pin I2C side header on right (+X) edge */}
       <mesh position={[2.82, 0.24, -0.55]}>
         <boxGeometry args={[0.36, 0.32, 1.15]} />
-        <meshStandardMaterial {...gndBlack} />
+        <CadMaterial mat={gndBlack} />
       </mesh>
     </group>
   );
@@ -1000,45 +1024,45 @@ function PcbEsp32Mesh({ visual }: { visual: PartVisualState }) {
       {/* Deep navy ESP32 DevKit PCB (28 × 50 mm, oriented along Z with USB-C facing -Z) */}
       <mesh castShadow receiveShadow>
         <boxGeometry args={[2.78, 0.18, 4.95]} />
-        <meshStandardMaterial {...pcbMat} />
+        <CadMaterial mat={pcbMat} />
       </mesh>
 
       {/* Brushed silver ESP-WROOM-32 RF shield can */}
       <mesh position={[0, 0.28, 0.65]} castShadow>
         <boxGeometry args={[1.78, 0.36, 1.95]} />
-        <meshStandardMaterial {...shieldMat} />
+        <CadMaterial mat={shieldMat} />
       </mesh>
 
       {/* PCB meander Wi-Fi antenna area at front (+Z) */}
       <mesh position={[0, 0.12, 2.02]}>
         <boxGeometry args={[1.65, 0.06, 0.68]} />
-        <meshStandardMaterial {...headerMat} />
+        <CadMaterial mat={headerMat} />
       </mesh>
       <mesh position={[0, 0.16, 2.06]}>
         <boxGeometry args={[1.35, 0.04, 0.14]} />
-        <meshStandardMaterial {...goldMat} />
+        <CadMaterial mat={goldMat} />
       </mesh>
 
       {/* Silver USB-C port facing rear (-Z) for easy classroom flashing */}
       <mesh position={[0, 0.24, -2.35]} castShadow>
         <boxGeometry args={[0.92, 0.32, 0.68]} />
-        <meshStandardMaterial {...shieldMat} />
+        <CadMaterial mat={shieldMat} />
       </mesh>
 
       {/* EN & BOOT tactile micro-buttons */}
       <mesh position={[-0.75, 0.2, -1.82]}>
         <boxGeometry args={[0.32, 0.18, 0.4]} />
-        <meshStandardMaterial {...shieldMat} />
+        <CadMaterial mat={shieldMat} />
       </mesh>
       <mesh position={[0.75, 0.2, -1.82]}>
         <boxGeometry args={[0.32, 0.18, 0.4]} />
-        <meshStandardMaterial {...shieldMat} />
+        <CadMaterial mat={shieldMat} />
       </mesh>
 
       {/* Status power/telemetry LED */}
       <mesh position={[0.45, 0.16, -1.35]}>
         <boxGeometry args={[0.16, 0.1, 0.22]} />
-        <meshStandardMaterial {...ledMat} />
+        <CadMaterial mat={ledMat} />
       </mesh>
 
       {/* Twin 15-pin black female/male headers & standoffs */}
@@ -1046,11 +1070,11 @@ function PcbEsp32Mesh({ visual }: { visual: PartVisualState }) {
         <group key={idx}>
           <mesh position={[xPos, -0.34, 0]}>
             <boxGeometry args={[0.26, 0.56, 4.15]} />
-            <meshStandardMaterial {...headerMat} />
+            <CadMaterial mat={headerMat} />
           </mesh>
           <mesh position={[xPos, 0.2, 0]}>
             <boxGeometry args={[0.18, 0.24, 4.0]} />
-            <meshStandardMaterial {...goldMat} />
+            <CadMaterial mat={goldMat} />
           </mesh>
         </group>
       ))}
@@ -1086,26 +1110,26 @@ function SensorImuMesh({ visual }: { visual: PartVisualState }) {
       {/* Compact IMU breakout board (21 × 16 mm) */}
       <mesh castShadow receiveShadow>
         <boxGeometry args={[2.05, 0.16, 1.55]} />
-        <meshStandardMaterial {...pcbMat} />
+        <CadMaterial mat={pcbMat} />
       </mesh>
       {/* Central MEMS QFN chip */}
       <mesh position={[0, 0.14, 0]}>
         <boxGeometry args={[0.48, 0.12, 0.48]} />
-        <meshStandardMaterial {...icMat} />
+        <CadMaterial mat={icMat} />
       </mesh>
       {/* Crisp white silkscreen X & Y axis reference arrows on top */}
       <mesh position={[0.42, 0.1, 0.42]}>
         <boxGeometry args={[0.62, 0.03, 0.07]} />
-        <meshStandardMaterial {...silkMat} />
+        <CadMaterial mat={silkMat} />
       </mesh>
       <mesh position={[0.14, 0.1, 0.14]}>
         <boxGeometry args={[0.07, 0.03, 0.62]} />
-        <meshStandardMaterial {...silkMat} />
+        <CadMaterial mat={silkMat} />
       </mesh>
       {/* 4-pin I2C header */}
       <mesh position={[-0.78, 0.22, 0]}>
         <boxGeometry args={[0.24, 0.32, 1.1]} />
-        <meshStandardMaterial {...goldMat} />
+        <CadMaterial mat={goldMat} />
       </mesh>
     </group>
   );
@@ -1138,31 +1162,31 @@ function HipUBracketMesh({
       {/* Upper hip-roll mounting flange straddling Z shaft */}
       <mesh position={[-sign * 0.45, 0.92, 0.56]} castShadow receiveShadow>
         <boxGeometry args={[1.35, 0.88, 0.28]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
       <mesh position={[-sign * 0.45, 0.92, -0.78]} castShadow receiveShadow>
         <boxGeometry args={[1.35, 0.88, 0.26]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
       {/* Stepped outer shoulder bridge connecting down to hip pitch servo */}
       <mesh position={[sign * 0.24, 0.15, 0]} castShadow receiveShadow>
         <boxGeometry args={[0.42, 2.38, 1.64]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
       {/* Top cap bridging flange to outer shoulder */}
       <mesh position={[-sign * 0.12, 1.24, -0.1]} castShadow>
         <boxGeometry args={[1.25, 0.3, 1.62]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
       {/* Lower U-saddle cradle around hip_pitch servo */}
       <mesh position={[-sign * 0.18, -0.88, 0]} castShadow receiveShadow>
         <boxGeometry args={[1.18, 0.32, 1.64]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
       {/* Subtle orange engineering alignment rib */}
       <mesh position={[sign * 0.47, 0.15, 0]}>
         <boxGeometry args={[0.08, 1.35, 0.24]} />
-        <meshStandardMaterial {...accentMat} />
+        <CadMaterial mat={accentMat} />
       </mesh>
     </group>
   );
@@ -1197,30 +1221,30 @@ function AvianShinMesh({
     <group>
       {/* Main swept avian PLA shin body */}
       <mesh geometry={geom} castShadow receiveShadow>
-        <meshStandardMaterial {...ivoryMat} />
+        <CadMaterial mat={ivoryMat} />
       </mesh>
 
       {/* Upper hip-pitch joint collar hub (at local y=+1.9, z=+0.1) */}
       <mesh position={[0, 1.9, 0.1]} rotation={[0, 0, Math.PI / 2]} castShadow>
         <cylinderGeometry args={[0.72, 0.72, 1.68, 20]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
       {/* Outer orange joint cap */}
       <mesh position={[sign * 0.86, 1.9, 0.1]} rotation={[0, 0, Math.PI / 2]}>
         <cylinderGeometry args={[0.42, 0.42, 0.12, 16]} />
-        <meshStandardMaterial {...orangeMat} />
+        <CadMaterial mat={orangeMat} />
       </mesh>
 
       {/* Lower ankle servo housing collar (at local y=-1.85, z=+0.4) */}
       <mesh position={[0, -1.75, 0.35]} castShadow>
         <boxGeometry args={[1.64, 0.95, 1.35]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
 
       {/* Inner cable routing channel groove detail */}
       <mesh position={[-sign * 0.74, 0.15, -0.35]}>
         <boxGeometry args={[0.16, 2.8, 0.32]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
     </group>
   );
@@ -1250,33 +1274,33 @@ function DuckFootPlateMesh({ visual }: { visual: PartVisualState }) {
     <group>
       {/* Wide webbed duck foot structural plate */}
       <mesh geometry={geom} position={[0, -0.35, 0]} castShadow receiveShadow>
-        <meshStandardMaterial {...ivoryMat} />
+        <CadMaterial mat={ivoryMat} />
       </mesh>
 
       {/* Signal-orange webbed toe ridge accent */}
       <mesh position={[0, -0.02, 2.05]} castShadow>
         <boxGeometry args={[3.4, 0.24, 0.85]} />
-        <meshStandardMaterial {...orangeMat} />
+        <CadMaterial mat={orangeMat} />
       </mesh>
 
       {/* Ankle clevis yoke rising to ankle_roll pivot (local y=+1.0, z=-0.6) */}
       <mesh position={[0, 0.34, -0.6]} castShadow receiveShadow>
         <boxGeometry args={[2.15, 0.56, 2.35]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
       {/* Front & rear yoke arms straddling the ankle servo */}
       <mesh position={[0, 0.86, 0.38]} castShadow>
         <boxGeometry args={[1.65, 0.96, 0.32]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
       <mesh position={[0, 0.86, -1.52]} castShadow>
         <boxGeometry args={[1.65, 0.96, 0.32]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
       {/* Front ankle bearing bolt */}
       <mesh position={[0, 1.0, 0.58]} rotation={[Math.PI / 2, 0, 0]}>
         <cylinderGeometry args={[0.28, 0.28, 0.14, 16]} />
-        <meshStandardMaterial {...orangeMat} />
+        <CadMaterial mat={orangeMat} />
       </mesh>
     </group>
   );
@@ -1294,7 +1318,7 @@ function DuckFootTpuMesh({ visual }: { visual: PartVisualState }) {
     <group>
       {/* Flexible 95A charcoal TPU webbed sole resting flush on y=0 */}
       <mesh geometry={geom} position={[0, -0.02, 0]} castShadow receiveShadow>
-        <meshStandardMaterial {...tpuMat} />
+        <CadMaterial mat={tpuMat} />
       </mesh>
     </group>
   );
@@ -1320,25 +1344,25 @@ function NeckLinkMesh({ visual }: { visual: PartVisualState }) {
       {/* Twin pan-tilt gimbal side arms gripping neck_pitch shaft */}
       <mesh position={[-1.08, -0.25, -0.08]} castShadow receiveShadow>
         <boxGeometry args={[0.3, 2.25, 1.15]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
       <mesh position={[1.08, -0.25, -0.08]} castShadow receiveShadow>
         <boxGeometry args={[0.3, 2.25, 1.15]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
       {/* Upper gimbal cradle deck holding servo_head_yaw */}
       <mesh position={[0, 0.56, 0.05]} castShadow receiveShadow>
         <boxGeometry args={[2.46, 0.42, 2.15]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
       {/* Neck pivot hub caps */}
       <mesh position={[1.25, -1.1, -0.15]} rotation={[0, 0, Math.PI / 2]}>
         <cylinderGeometry args={[0.36, 0.36, 0.1, 16]} />
-        <meshStandardMaterial {...orangeMat} />
+        <CadMaterial mat={orangeMat} />
       </mesh>
       <mesh position={[-1.25, -1.1, -0.15]} rotation={[0, 0, Math.PI / 2]}>
         <cylinderGeometry args={[0.36, 0.36, 0.1, 16]} />
-        <meshStandardMaterial {...orangeMat} />
+        <CadMaterial mat={orangeMat} />
       </mesh>
     </group>
   );
@@ -1372,6 +1396,7 @@ function HeadDomeMesh({ visual }: { visual: PartVisualState }) {
     metalness: 0.15,
     emissiveBase: COLORS.eyeCyan,
     emissiveBaseIntensity: isGhost ? 0 : 0.95,
+    shellFade: true,
   });
   const amberRingMat = resolveMatProps(visual, {
     color: COLORS.eyeAmber,
@@ -1379,26 +1404,33 @@ function HeadDomeMesh({ visual }: { visual: PartVisualState }) {
     metalness: 0.2,
     emissiveBase: COLORS.eyeAmber,
     emissiveBaseIntensity: isGhost ? 0 : 0.72,
+    shellFade: true,
+  });
+  const pupilMat = resolveMatProps(visual, {
+    color: '#020617',
+    roughness: 0.05,
+    metalness: 0.8,
+    shellFade: true,
   });
 
   return (
     <group>
       {/* Main cute BDX wide rounded dome head */}
       <mesh geometry={domeGeom} castShadow receiveShadow>
-        <meshStandardMaterial {...shellMat} />
+        <CadMaterial mat={shellMat} />
       </mesh>
 
       {/* Subtle neck skirt collar at base */}
       <mesh position={[0, -1.35, -0.35]} castShadow>
         <cylinderGeometry args={[1.55, 1.38, 0.56, 24]} />
-        <meshStandardMaterial {...slateMat} />
+        <CadMaterial mat={slateMat} />
       </mesh>
 
       {/* Side temple ear-socket decorative rings */}
       {[-3.62, 3.62].map((xPos, idx) => (
         <mesh key={idx} position={[xPos, 0.08, -0.1]} rotation={[0, 0, Math.PI / 2]}>
           <cylinderGeometry args={[0.72, 0.76, 0.28, 22]} />
-          <meshStandardMaterial {...slateMat} />
+          <CadMaterial mat={slateMat} />
         </mesh>
       ))}
 
@@ -1406,16 +1438,16 @@ function HeadDomeMesh({ visual }: { visual: PartVisualState }) {
       <group position={[0, 0.28, 2.78]}>
         <mesh castShadow>
           <boxGeometry args={[4.85, 1.24, 0.78]} />
-          <meshStandardMaterial {...visorMat} />
+          <CadMaterial mat={visorMat} />
         </mesh>
         {/* Rounded end caps of the visor bar */}
         <mesh position={[-2.42, 0, -0.05]}>
           <cylinderGeometry args={[0.62, 0.62, 0.76, 20]} />
-          <meshStandardMaterial {...visorMat} />
+          <CadMaterial mat={visorMat} />
         </mesh>
         <mesh position={[2.42, 0, -0.05]}>
           <cylinderGeometry args={[0.62, 0.62, 0.76, 20]} />
-          <meshStandardMaterial {...visorMat} />
+          <CadMaterial mat={visorMat} />
         </mesh>
 
         {/* Twin expressive optical eye lenses (glowing cyan ring + amber core) */}
@@ -1424,22 +1456,22 @@ function HeadDomeMesh({ visual }: { visual: PartVisualState }) {
             {/* Anodized camera bezel */}
             <mesh rotation={[Math.PI / 2, 0, 0]}>
               <cylinderGeometry args={[0.48, 0.52, 0.16, 24]} />
-              <meshStandardMaterial {...slateMat} />
+              <CadMaterial mat={slateMat} />
             </mesh>
             {/* Glowing cyan optical LED ring */}
             <mesh position={[0, 0, 0.08]}>
               <torusGeometry args={[0.33, 0.065, 12, 28]} />
-              <meshStandardMaterial {...cyanLensMat} />
+              <CadMaterial mat={cyanLensMat} />
             </mesh>
             {/* Warm amber iris ring */}
             <mesh position={[0, 0, 0.075]}>
               <torusGeometry args={[0.18, 0.045, 10, 24]} />
-              <meshStandardMaterial {...amberRingMat} />
+              <CadMaterial mat={amberRingMat} />
             </mesh>
             {/* Glossy dark pupil glass */}
             <mesh position={[0, 0, 0.04]} rotation={[Math.PI / 2, 0, 0]}>
               <cylinderGeometry args={[0.14, 0.14, 0.08, 18]} />
-              <meshStandardMaterial color="#020617" roughness={0.05} metalness={0.8} />
+              <CadMaterial mat={pupilMat} />
             </mesh>
           </group>
         ))}
@@ -1447,7 +1479,7 @@ function HeadDomeMesh({ visual }: { visual: PartVisualState }) {
         {/* Small center telemetry sensor dot */}
         <mesh position={[0, 0.34, 0.41]}>
           <sphereGeometry args={[0.09, 12, 12]} />
-          <meshStandardMaterial {...amberRingMat} />
+          <CadMaterial mat={amberRingMat} />
         </mesh>
       </group>
     </group>
@@ -1474,17 +1506,17 @@ function HeadBeakMesh({ visual }: { visual: PartVisualState }) {
     <group rotation={[0.06, 0, 0]}>
       {/* Sculpted signal-orange upper duck bill */}
       <mesh geometry={upperGeom} castShadow receiveShadow>
-        <meshStandardMaterial {...orangeMat} />
+        <CadMaterial mat={orangeMat} />
       </mesh>
       {/* Lower mandible with cute subtle smile separation */}
       <mesh geometry={lowerGeom} castShadow receiveShadow>
-        <meshStandardMaterial {...deepOrangeMat} />
+        <CadMaterial mat={deepOrangeMat} />
       </mesh>
       {/* Twin delicate nostril accents on upper beak */}
       {[-0.48, 0.48].map((xPos, i) => (
         <mesh key={i} position={[xPos, 0.56, 0.62]} rotation={[0.12, 0, 0]}>
           <capsuleGeometry args={[0.07, 0.22, 6, 10]} />
-          <meshStandardMaterial {...deepOrangeMat} />
+          <CadMaterial mat={deepOrangeMat} />
         </mesh>
       ))}
     </group>
@@ -1523,16 +1555,16 @@ function HeadAntennasMesh({ visual }: { visual: PartVisualState }) {
           {/* Rotary ear-socket base collar */}
           <mesh position={[0, 0, 0]} castShadow>
             <cylinderGeometry args={[0.46, 0.52, 0.42, 18]} />
-            <meshStandardMaterial {...slateMat} />
+            <CadMaterial mat={slateMat} />
           </mesh>
           {/* BDX ear blade */}
           <mesh geometry={bladeGeom} position={[0, 0.15, 0]} castShadow receiveShadow>
-            <meshStandardMaterial {...ivoryMat} />
+            <CadMaterial mat={ivoryMat} />
           </mesh>
           {/* Signal-orange ear tip cap */}
           <mesh position={[0, 2.38, 0]} castShadow>
             <boxGeometry args={[0.74, 0.34, 0.36]} />
-            <meshStandardMaterial {...orangeMat} />
+            <CadMaterial mat={orangeMat} />
           </mesh>
         </group>
       ))}
@@ -1566,16 +1598,16 @@ function BrassStandoffsMesh({ visual }: { visual: PartVisualState }) {
           {/* Hexagonal M3x22mm brass standoff */}
           <mesh castShadow receiveShadow>
             <cylinderGeometry args={[0.24, 0.24, 2.08, 6]} />
-            <meshStandardMaterial {...brassMat} />
+            <CadMaterial mat={brassMat} />
           </mesh>
           {/* Top & bottom M3 steel socket cap screws */}
           <mesh position={[0, 1.18, 0]}>
             <cylinderGeometry args={[0.24, 0.24, 0.2, 12]} />
-            <meshStandardMaterial {...steelMat} />
+            <CadMaterial mat={steelMat} />
           </mesh>
           <mesh position={[0, -1.16, 0]}>
             <cylinderGeometry args={[0.24, 0.24, 0.2, 12]} />
-            <meshStandardMaterial {...steelMat} />
+            <CadMaterial mat={steelMat} />
           </mesh>
         </group>
       ))}
@@ -1607,18 +1639,18 @@ function FastenerKitMesh({ visual }: { visual: PartVisualState }) {
         <group key={idx} position={[xPos, 0.1, 0]} rotation={[Math.PI / 2, 0, 0]}>
           <mesh castShadow>
             <cylinderGeometry args={[0.18, 0.18, 0.18, 12]} />
-            <meshStandardMaterial {...steelMat} />
+            <CadMaterial mat={steelMat} />
           </mesh>
           <mesh position={[0, -0.26, 0]}>
             <cylinderGeometry args={[0.1, 0.1, 0.42, 10]} />
-            <meshStandardMaterial {...darkSteelMat} />
+            <CadMaterial mat={darkSteelMat} />
           </mesh>
         </group>
       ))}
       {/* Spare XT30 & cable clamp collar accent */}
       <mesh position={[0, -0.26, 0.15]} castShadow>
         <boxGeometry args={[0.66, 0.34, 0.48]} />
-        <meshStandardMaterial {...xt30Mat} />
+        <CadMaterial mat={xt30Mat} />
       </mesh>
     </group>
   );

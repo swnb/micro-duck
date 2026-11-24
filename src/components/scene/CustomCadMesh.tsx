@@ -238,7 +238,10 @@ export function CustomCadMesh({
         castShadow
         receiveShadow
       >
-        <meshStandardMaterial {...stlMaterialProps} />
+        <meshStandardMaterial
+          key={stlMaterialProps.transparent ? 'stl-transparent' : 'stl-opaque'}
+          {...stlMaterialProps}
+        />
       </mesh>
     );
   }

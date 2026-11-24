@@ -628,7 +628,7 @@ function JointAxisGizmo({
         <Html
           position={badgeOffset}
           center
-          distanceFactor={26}
+          distanceFactor={42}
           zIndexRange={[10, 0]}
         >
           <button
@@ -661,7 +661,7 @@ function BaseOriginFrame({ showCallouts }: { showCallouts: boolean }): JSX.Eleme
         <meshBasicMaterial color="#0F172A" />
       </mesh>
       {showCallouts && (
-        <Html position={[0, 0.25, -0.9]} center distanceFactor={28} zIndexRange={[5, 0]}>
+        <Html position={[0, 0.25, -1.35]} center distanceFactor={44} zIndexRange={[5, 0]}>
           <div className="pointer-events-none select-none whitespace-nowrap rounded border border-slate-300/80 bg-white/85 px-1.5 py-0.5 font-mono text-[9px] font-medium text-slate-600 shadow-sm backdrop-blur-sm">
             BASE (0,0,0)
           </div>
@@ -861,7 +861,7 @@ function CoMAndSupportOverlay({
         </mesh>
 
         {showCallouts && (
-          <Html position={[0, 0.12, 1.15]} center distanceFactor={26} zIndexRange={[8, 0]}>
+          <Html position={[0, 0.14, 1.45]} center distanceFactor={42} zIndexRange={[8, 0]}>
             <div
               ref={labelDivRef}
               className="pointer-events-none select-none whitespace-nowrap rounded-full border border-emerald-500/40 bg-white/92 px-2 py-0.5 font-mono text-[10px] font-semibold text-slate-800 shadow-sm backdrop-blur-sm"
